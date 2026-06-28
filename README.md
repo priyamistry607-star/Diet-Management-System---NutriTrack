@@ -105,7 +105,6 @@ Whether your goal is **weight loss, weight gain, or maintaining a healthy lifest
 - 🥤 Water Intake Tracker
 - ⌚ Smartwatch Integration
 
----
 
 ## 🤝 Contributing
 
