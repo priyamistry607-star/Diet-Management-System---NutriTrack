@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NutriTrack — Smart Diet Management</title>
+  <style>
+    :root {
+      --bg: #f4f7fa;
+      --card: #ffffff;
+      --primary: #2e7d32;
+      --accent: #43a047;
+      --text: #333333;
+      --muted: #777777;
+      --radius: 10px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    nav a {
+      color: white;
+      margin-left: 1rem;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    nav a:hover { text-decoration: underline; }
+    .hero {
+      background: linear-gradient(rgba(46,125,50,0.7), rgba(46,125,50,0.7)),
+        url('https://images.unsplash.com/photo-1554284126-aa88f22d8b54?auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      text-align: center;
+      padding: 5rem 2rem;
+      border-radius: 0 0 30px 30px;
+    }
+    .hero h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+    .hero p { font-size: 1.2rem; }
+
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.4rem 0 1rem 0;
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      padding: 0.6rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th { background: #f0f0f0; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: #e8f5e9;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NutriTrack</h1>
+    <nav id="navLinks"></nav>
+  </header>
+
+  <div id="mainContent"></div>
+
+  <footer>NutriTrack © 2025 — Eat Smart, Live Better</footer>
+
+  <script>
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+    // --- Data & Storage ---
+    function getUsers(){ return JSON.parse(localStorage.getItem('dt_users') || '{}'); }
+    function saveUsers(u){ localStorage.setItem('dt_users', JSON.stringify(u)); }
+    function getPlans(){ return JSON.parse(localStorage.getItem('dt_plans') || '[]'); }
+    function savePlans(p){ localStorage.setItem('dt_plans', JSON.stringify(p)); }
+    function getLogs(){ return JSON.parse(localStorage.getItem('dt_logs') || '[]'); }
+    function saveLogs(l){ localStorage.setItem('dt_logs', JSON.stringify(l)); }
+    function getAppointments(){ return JSON.parse(localStorage.getItem('dt_apps') || '[]'); }
+    function saveAppointments(a){ localStorage.setItem('dt_apps', JSON.stringify(a)); }
+    function getSession(){ return JSON.parse(localStorage.getItem('dt_session') || 'null'); }
+    function setSession(u){ localStorage.setItem('dt_session', JSON.stringify(u)); }
+    function clearSession(){ localStorage.removeItem('dt_session'); }
+
+    // Food calorie dataset (calories per 100g)
+    const foodCalories = {
+      "paneer": 265,
+      "rice": 130,
+      "roti": 110,
+      "dal": 120,
+      "egg": 155,
+      "chicken": 239,
+      "fish": 206,
+      "milk": 42,
+      "banana": 89,
+      "apple": 52,
+      "oatmeal": 68,
+      "salad": 20,
+      "fruits": 50
+    };
+
+    function renderNav(){
+      const nav = $('#navLinks');
+      const s = getSession();
+      if (s) {
+        nav.innerHTML = `<a href="#" id="linkDashboard">Dashboard</a>
+                         <a href="#" id="linkLogout">Logout (${s.username})</a>`;
+        $('#linkDashboard').onclick = e => { e.preventDefault(); renderDashboard(); };
+        $('#linkLogout').onclick = e => { e.preventDefault(); clearSession(); renderNav(); renderHome(); };
+      } else {
+        nav.innerHTML = `
+          <a href="#" id="linkHome">Home</a>
+          <a href="#" id="linkAbout">About</a>
+          <a href="#" id="linkContact">Contact</a>
+          <a href="#" id="linkLogin">Login</a>
+          <a href="#" id="linkRegister">Register</a>
+        `;
+        $('#linkHome').onclick = e => { e.preventDefault(); renderHome(); };
+        $('#linkAbout').onclick = e => { e.preventDefault(); renderAbout(); };
+        $('#linkContact').onclick = e => { e.preventDefault(); renderContact(); };
+        $('#linkLogin').onclick = e => { e.preventDefault(); renderLogin(); };
+        $('#linkRegister').onclick = e => { e.preventDefault(); renderRegister(); };
+      }today
+    }
+
+    function renderHome(){
+      $('#mainContent').innerHTML = `
+        <div class="hero">
+          <h2>Track Meals, Know Calories, Stay Fit</h2>
+          <p>Your personal diet companion for smart nutrition and balanced health.</p>
+        </div>
+        <div class="container">
+          <div class="card">
+            <h3>Why Choose NutriTrack?</h3>
+            <ul>
+              <li>Personalized diet plans tailored to your needs</li>
+              <li>Track daily meals and progress weekly</li>
+              <li>Consult top dietitians directly from your dashboard</li>
+            </ul>
+            <blockquote>“Your body is your most priceless possession. Take care of it.”</blockquote>
+            <h3></h3>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAbout(){
+      $('#mainContent').innerHTML = `
+        <div class="container">
+          <div class="card">
+            <h2>About Us</h2>
+            <p>NutriTrack enables users to connect with experienced dietitians, track daily meals with calorie estimation, log progress, and achieve wellness goals.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderContact(){
+      $('#mainContent').innerHTML = `
+        <div class="container">
+          <div class="card">
+            <h2>Contact Us</h2>
+            <p>Email:NutriTrack@gmail.com</p>
+            <p>Phone No: 7069801005</p>            
+            <label>Name</label><input id="cName" placeholder="Your name">
+            <label>Email</label><input id="cEmail" placeholder="Your email">
+            <label>Message</label><textarea id="cMsg" placeholder="Your message..."></textarea>
+            <button class="btn" id="btnContact">Send</button>
+
+          </div>
+        </div>
+      `;
+      $('#btnContact').onclick = () => {
+        alert('Thanks! We will contact you soon.');
+        renderHome();
+      };
+    }
+
+    function renderLogin(){
+      $('#mainContent').innerHTML = `
+        <div class="container"><div class="card">
+          <h2>Login</h2>
+          <label>Username</label><input id="loginUser">
+          <label>Password</label><input id="loginPass" type="password">
+          <button class="btn" id="btnLogin">Login</button>
+        </div></div>
+      `;
+      $('#btnLogin').onclick = () => {
+        const un = $('#loginUser').value.trim(), pw = $('#loginPass').value;
+        const users = getUsers();
+        if (users[un] && users[un].password === pw) {
+          setSession({ username: un, role: users[un].role });
+          renderNav();
+          renderDashboard();
+        } else {
+          alert('Invalid username or password');
+        }
+      };
+    }
+
+    function renderRegister(){
+      $('#mainContent').innerHTML = `
+        <div class="container"><div class="card">
+          <h2>Register</h2>
+          <label>Username</label><input id="regUser">
+          <label>Password</label><input id="regPass" type="password">
+          <label>Role</label>
+          <select id="regRole"><option value="user">User</option><option value="dietitian">Dietitian</option></select>
+          <button class="btn" id="btnRegister">Register</button>
+        </div></div>
+      `;
+      $('#btnRegister').onclick = () => {
+        const un = $('#regUser').value.trim(), pw = $('#regPass').value, role = $('#regRole').value;
+        if (!un || !pw) {
+          alert('Fill all fields');
+          return;
+        }
+        const users = getUsers();
+        if (users[un]) {
+          alert('Username already exists');
+          return;
+        }
+        users[un] = { password: pw, role };
+        saveUsers(users);
+        alert('Successfully Registered now please login.');
+        renderLogin();
+      };
+    }
+
+    function renderDashboard(){
+      const s = getSession();
+      if (!s) {
+        renderLogin();
+        return;
+      }
+      if (s.role === 'user') renderUserDash();
+      else renderDietDash();
+    }
+
+    // Parse a meal description string, detect food and quantity, return calories estimate
+    function estimateCalories(mealStr) {
+      let total = 0;
+      // for each known food, find pattern
+      for (const food in foodCalories) {
+        const pattern = new RegExp(`(\\d+)\\s*(?:g)?\\s*${food}`, 'i');
+        const m = mealStr.match(pattern);
+        if (m) {
+          const qty = parseInt(m[1]); // grams
+          const cal100 = foodCalories[food];
+          const c = (qty / 100) * cal100;
+          total += c;
+        }
+      }
+      return Math.round(total);
+    }
+
+    function renderUserDash(){
+      const s = getSession();
+      const logs = getLogs().filter(l => l.username === s.username);
+      const today = new Date().toISOString().slice(0,10);
+      const todays = logs.filter(l => l.date === today);
+
+      // Weekly
+      const weekAcc = {};
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const ds = d.toISOString().slice(0,10);
+        weekAcc[ds] = logs.filter(l => l.date === ds)
+                          .reduce((sum, rec) => sum + (rec.calories || 0), 0);
+      }
+
+      // Pull assigned plan (if any)
+      const plans = getPlans().filter(p => p.username === s.username);
+
+      $('#mainContent').innerHTML = `
+        <div class="container">
+          <div class="card">
+            <h2>Welcome, ${s.username}</h2>
+            <h3>Enter Today’s Meal</h3>
+            <input id="mealDesc" placeholder="e.g. 200g paneer, 100g rice">
+            <button class="btn" id="btnAddMeal">Add Meal</button>
+            <button class="btn" id="btnViewCal">View Calorie Table</button>
+          </div>
+          <div class="card">
+            <h3>Today's Meals</h3>
+            ${todays.length
+              ? `<table><tr><th>Time</th><th>Meal</th><th>Calories</th></tr>
+                 ${todays.map(l => `<tr><td>${l.time}</td><td>${l.meal}</td><td>${l.calories}</td></tr>`).join('')}
+                 <tr><th colspan="2">Total</th><th>${todays.reduce((s,l)=>s + (l.calories||0), 0)} kcal</th></tr>
+                 </table>`
+              : `<p class="muted">No meals logged today.</p>`}
+          </div>
+          <div class="card">
+            <h3>Weekly Calories</h3>
+            <table><tr><th>Date</th><th>Total kcal</th></tr>
+              ${Object.entries(weekAcc).map(([d, tot]) => `<tr><td>${d}</td><td>${tot} kcal</td></tr>`).join('')}
+            </table>
+          </div>
+          <div class="card">
+            <h3>Your Diet Plan</h3>
+            ${plans.length
+              ? `<p><strong>Assigned by: ${plans[0].dietitian}</strong></p><p>${plans[0].details}</p>`
+              : `<p class="muted">No plan assigned yet.</p>`}
+          </div>
+          <div class="card">
+            <h3>Request Appointment</h3>
+            <label>Dietitian Username</label><input id="reqDietitian" placeholder="Dietitian username">
+            <label>Message / Goal</label><textarea id="reqMsg" placeholder="Description..."></textarea>
+            <button class="btn" id="btnReq">Send Request</button>
+          </div>
+        </div>
+      `;
+
+      $('#btnAddMeal').onclick = () => {
+        const meal = $('#mealDesc').value.trim();
+        if (!meal) {
+          alert('Enter a meal description');
+          return;
+        }
+        const now = new Date();
+        const cal = estimateCalories(meal);
+        const rec = {
+          username: s.username,
+          date: now.toISOString().slice(0,10),
+          time: now.toLocaleTimeString(),
+          meal,
+          calories: cal
+        };
+        const logs = getLogs();
+        logs.push(rec);
+        saveLogs(logs);
+        renderUserDash();
+      };
+
+      $('#btnReq').onclick = () => {
+        const diet = $('#reqDietitian').value.trim();
+        const msg = $('#reqMsg').value.trim();
+        if (!diet || !msg) {
+          alert('Fill both fields');
+          return;
+        }
+        const apps = getAppointments();
+        apps.push({ user: s.username, dietitian: diet, msg, status: 'Pending' });
+        saveAppointments(apps);
+        alert('Appointment request sent');
+      };
+
+      $('#btnViewCal').onclick = () => {
+        let html = `<div class="container"><div class="card"><h2>Food Calorie Table</h2>
+          <table><tr><th>Food</th><th>kcal / 100g</th></tr>`;
+        for (const [f, c] of Object.entries(foodCalories)) {
+          html += `<tr><td>${f}</td><td>${c}</td></tr>`;
+        }
+        html += `</table><button class="btn" id="btnBack">Back</button></div></div>`;
+        $('#mainContent').innerHTML = html;
+        $('#btnBack').onclick = () => { renderUserDash(); };
+      };
+    }
+
+    function renderDietDash(){
+      const s = getSession();
+      const plans = getPlans();
+      const apps = getAppointments().filter(a => a.dietitian === s.username);
+
+      $('#mainContent').innerHTML = `
+        <div class="container">
+          <div class="card">
+            <h2>Dietitian Dashboard</h2>
+            <h3>Assign Diet Plan</h3>
+            <input id="planUser" placeholder="User username">
+            <textarea id="planDetails" placeholder="Plan details..."></textarea>
+            <button class="btn" id="btnPlan">Save Plan</button>
+          </div>
+          <div class="card">
+            <h3>Appointment Requests</h3>
+            ${apps.length
+              ? `<table><tr><th>User</th><th>Message</th><th>Status</th><th>Action</th></tr>
+                  ${apps.map((a,i) => `<tr>
+                    <td>${a.user}</td><td>${a.msg}</td><td>${a.status}</td>
+                    <td>${a.status === 'Pending' ? `<button class="btn-outline" data-i="${i}">Approve</button>` : ''}</td>
+                  </tr>`).join('')}
+                 </table>`
+              : `<p class="muted">No appointment requests.</p>`}
+          </div>
+        </div>
+      `;
+
+      $('#btnPlan').onclick = () => {
+        const usern = $('#planUser').value.trim();
+        const details = $('#planDetails').value.trim();
+        if (!usern || !details) {
+          alert('Fill both fields');
+          return;
+        }
+        const pl = getPlans();
+        pl.push({ username: usern, dietitian: s.username, details });
+        savePlans(pl);
+        alert('Plan assigned');
+        renderDietDash();
+      };
+
+      $$('.btn-outline').forEach(b => {
+        b.onclick = () => {
+          const apps = getAppointments();
+          apps[b.dataset.i].status = 'Approved';
+          saveAppointments(apps);
+          renderDietDash();
+        };
+      });
+    }
+
+    // Initialization
+    renderNav();
+    if (getSession()) renderDashboard();
+    else renderHome();
+  </script>
+</body>
+</html>
