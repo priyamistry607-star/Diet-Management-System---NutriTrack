@@ -81,35 +81,7 @@ Whether your goal is **weight loss, weight gain, or maintaining a healthy lifest
 
 ---
 
-## 📂 Project Structure
 
-```
-NutriTrack/
-│
-├── assets/
-│   ├── css/
-│   ├── js/
-│   ├── images/
-│
-├── user/
-│   ├── dashboard.php
-│   ├── profile.php
-│   ├── meals.php
-│
-├── dietitian/
-│   ├── dashboard.php
-│   ├── appointments.php
-│
-├── database/
-│   └── diet_management.sql
-│
-├── login.php
-├── register.php
-├── index.php
-└── README.md
-```
-
----
 
 ## 🎯 Project Objectives
 
@@ -132,48 +104,6 @@ NutriTrack/
 - 🍎 Barcode Food Scanner
 - 🥤 Water Intake Tracker
 - ⌚ Smartwatch Integration
-
----
-
-## 📸 Screenshots
-
-> *(Add screenshots of your Home Page, User Dashboard, Dietitian Dashboard, Login Page, Reports, etc.)*
-
-```
-📷 Home Page
-
-📷 User Dashboard
-
-📷 Dietitian Dashboard
-
-📷 Appointment Page
-
-📷 Reports Page
-```
-
----
-
-## ⚙️ Installation
-
-```bash
-# Clone Repository
-git clone https://github.com/yourusername/NutriTrack.git
-
-# Open in XAMPP
-
-Move project into:
-htdocs/
-
-Import:
-diet_management.sql
-
-Start:
-Apache
-MySQL
-
-Open:
-http://localhost/NutriTrack
-```
 
 ---
 
